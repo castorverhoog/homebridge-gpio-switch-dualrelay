@@ -9,7 +9,7 @@ module.exports = function(homebridge) {
 };
 
 const switchPin = (pin, pinNo, inv, time, log) => {
-	log("writing "+inv ^ 1 + " to gpio pin "+ pinNo);
+	log("writing "+(inv ^ 1) + " to gpio pin "+ pinNo);
 	pin.write(inv ^ 1)
 		.then(() => setTimeout(() => {
 			pin.write(inv);
@@ -32,10 +32,10 @@ function GPIOAccessory(log, config) {
 	var relaypOff = new Gpio(this.pinOff, 'out');
 	
 	if(this.statep===true){
-		relaypOff.writeSync(0);
+		relaypOff.writeSync(this.inversed);
 		switchPin(relaypOn, this.pinOn, this.inversed, this.activeTime, this.log); 
 	}else{
-		relaypOn.writeSync(0);
+		relaypOn.writeSync(this.inversed);
 		switchPin(relaypOff, this.pinOff, this.inversed, this.activeTime, this.log);
 	}
 	
@@ -65,11 +65,11 @@ GPIOAccessory.prototype.setOn = function(on, callback) {
 	var relayOn = new Gpio(this.pinOn, 'out');
 	var relayOff = new Gpio(this.pinOff, 'out');
 	if(on){
-		relayOff.writeSync(0);
+		relayOff.writeSync(this.inversed);
 		switchPin(relayOn, this.pinOn, this.inversed, this.activeTime, this.log); 
 		this.state = true;
 	}else{
-		relayOn.writeSync(0);
+		relayOn.writeSync(this.inversed);
 		switchPin(relayOff, this.pinOff, this.inversed, this.activeTime, this.log);
 		this.state = false;
 	}
