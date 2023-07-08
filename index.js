@@ -36,7 +36,7 @@ function GPIOAccessory(log, config) {
 		switchPin(relaypOn, this.pinOn, this.inversed, this.activeTime, this.log); 
 	}else{
 		relaypOn.writeSync(0);
-		switchPin(relaypOff, this.pinOn, this.inversed, this.activeTime, this.log);
+		switchPin(relaypOff, this.pinOff, this.inversed, this.activeTime, this.log);
 	}
 	
 	if (!this.pinOn) throw new Error('You must provide a config value for pin-on.');
@@ -70,7 +70,7 @@ GPIOAccessory.prototype.setOn = function(on, callback) {
 		this.state = true;
 	}else{
 		relayOn.writeSync(0);
-		switchPin(relayOff, this.pinOn, this.inversed, this.activeTime, this.log);
+		switchPin(relayOff, this.pinOff, this.inversed, this.activeTime, this.log);
 		this.state = false;
 	}
 	callback(null);
