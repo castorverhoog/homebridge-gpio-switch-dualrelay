@@ -8,59 +8,70 @@ module.exports = function(homebridge) {
     homebridge.registerAccessory('homebridge-gpio-switch-dualrelay', 'GPIOSwitchDualRelay', GPIOAccessory);
 };
 
+const switchPin = (pin, pinNo, inv, time, log) => {
+	log("writing "+inv ^ 1 + " to gpio pin "+ pinNo);
+	pin.write(inv ^ 1)
+		.then(() => setTimeout(() => {
+			pin.write(inv);
+			log("writing "+inv + " to gpio pin "+ pinNo);
+		}, time))
+		.catch(err => console.log(err));
+};
+
 function GPIOAccessory(log, config) {
-    this.log = log;
-    this.name = config['name'];
-    this.pinOn = config['pin-on'];
-    this.pinOff = config['pin-off'];
-    this.statep = config['statep'];
-    this.service = new Service.Switch(this.name);
+	this.log = log;
+	this.name = config['name'];
+	this.pinOn = config['pin-on'];
+	this.pinOff = config['pin-off'];
+	this.statep = config['statep'];
+	this.inversed = config['inversed'] || 1;
+	this.activeTime = config['active-time'] || 500; // in milliseconds
+	this.service = new Service.Switch(this.name);
 
-    var relaypOn = new Gpio(this.pinOn, 'out');
-    var relaypOff = new Gpio(this.pinOff, 'out');
-
-    if(this.statep===true){
-      relaypOn.writeSync(1);
-      relaypOff.writeSync(0);
-    }else{
-      relaypOn.writeSync(0);
-      relaypOff.writeSync(1);
-    }
-
-    if (!this.pinOn) throw new Error('You must provide a config value for pin-on.');
-    if (!this.pinOff) throw new Error('You must provide a config value for pin-off.');
-
-    this.state = false;
-
-
-    this.service
-        .getCharacteristic(Characteristic.On)
-        .on('get', this.getOn.bind(this))
-        .on('set', this.setOn.bind(this));
+	var relaypOn = new Gpio(this.pinOn, 'out');
+	var relaypOff = new Gpio(this.pinOff, 'out');
+	
+	if(this.statep===true){
+		relaypOff.writeSync(0);
+		switchPin(relaypOn, this.pinOn, this.inversed, this.activeTime, this.log); 
+	}else{
+		relaypOn.writeSync(0);
+		switchPin(relaypOff, this.pinOn, this.inversed, this.activeTime, this.log);
+	}
+	
+	if (!this.pinOn) throw new Error('You must provide a config value for pin-on.');
+	if (!this.pinOff) throw new Error('You must provide a config value for pin-off.');
+	
+	this.state = false;
+	
+	
+	this.service
+		.getCharacteristic(Characteristic.On)
+		.on('get', this.getOn.bind(this))
+		.on('set', this.setOn.bind(this));
 
 }
 
 GPIOAccessory.prototype.getServices = function() {
-    return [this.service];
+	return [this.service];
 }
 
 GPIOAccessory.prototype.getOn = function(callback) {
-  callback(null, this.state);
+	callback(null, this.state);
 }
 
 GPIOAccessory.prototype.setOn = function(on, callback) {
-    this.state = !on;
-    var relayOn = new Gpio(this.pinOn, 'out');
-    var relayOff = new Gpio(this.pinOff, 'out');
-    if(on){
-      relayOn.writeSync(1);
-      relayOff.writeSync(0);
-      this.state = true;
-    }else{
-      relayOn.writeSync(0);
-      relayOff.writeSync(1);
-      this.state = false;
-    }
-    this.log('writing ' + (on ? 'true' : 'false') + ' to gpio: ' + this.pinOn + 'and ' + (on ? 'false' : 'true') + ' to gpio: ' + this.pinOff);
-		callback(null);
+	this.state = !on;
+	var relayOn = new Gpio(this.pinOn, 'out');
+	var relayOff = new Gpio(this.pinOff, 'out');
+	if(on){
+		relaypOff.writeSync(0);
+		switchPin(relaypOn, this.pinOn, this.inversed, this.activeTime, this.log); 
+		this.state = true;
+	}else{
+		relaypOn.writeSync(0);
+		switchPin(relaypOff, this.pinOn, this.inversed, this.activeTime, this.log);
+		this.state = false;
+	}
+	callback(null);
 }
