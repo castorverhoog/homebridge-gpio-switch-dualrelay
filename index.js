@@ -65,12 +65,12 @@ GPIOAccessory.prototype.setOn = function(on, callback) {
 	var relayOn = new Gpio(this.pinOn, 'out');
 	var relayOff = new Gpio(this.pinOff, 'out');
 	if(on){
-		relaypOff.writeSync(0);
-		switchPin(relaypOn, this.pinOn, this.inversed, this.activeTime, this.log); 
+		relayOff.writeSync(0);
+		switchPin(relayOn, this.pinOn, this.inversed, this.activeTime, this.log); 
 		this.state = true;
 	}else{
-		relaypOn.writeSync(0);
-		switchPin(relaypOff, this.pinOn, this.inversed, this.activeTime, this.log);
+		relayOn.writeSync(0);
+		switchPin(relayOff, this.pinOn, this.inversed, this.activeTime, this.log);
 		this.state = false;
 	}
 	callback(null);
