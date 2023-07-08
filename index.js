@@ -5,30 +5,30 @@ module.exports = function(homebridge) {
     Service = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
 
-    homebridge.registerAccessory('homebridge-gpio-switch-dualrelay', 'GPIOSWITCHDUALL', GPIOAccessory);
+    homebridge.registerAccessory('homebridge-gpio-switch-dualrelay', 'GPIOSwitchDualRelay', GPIOAccessory);
 };
 
 function GPIOAccessory(log, config) {
     this.log = log;
     this.name = config['name'];
-    this.pin = config['pin'];
-    this.pin2 = config['pin2'];
-    this.statep = config['statop'];
+    this.pinOn = config['pin-on'];
+    this.pinOff = config['pin-off'];
+    this.statep = config['statep'];
     this.service = new Service.Switch(this.name);
 
-    var relayp = new Gpio(this.pin, 'out');
-    var relayp2 = new Gpio(this.pin2, 'out');
+    var relaypOn = new Gpio(this.pinOn, 'out');
+    var relaypOff = new Gpio(this.pinOff, 'out');
 
     if(this.statep===true){
-      relayp.writeSync(1);
-      relayp2.writeSync(1);
+      relaypOn.writeSync(1);
+      relaypOff.writeSync(0);
     }else{
-      relayp.writeSync(0);
-      relayp2.writeSync(0);
+      relaypOn.writeSync(0);
+      relaypOff.writeSync(1);
     }
 
-    if (!this.pin) throw new Error('You must provide a config value for pin.');
-    if (!this.pin2) throw new Error('You must provide a config value for pin2.');
+    if (!this.pinOn) throw new Error('You must provide a config value for pin-on.');
+    if (!this.pinOff) throw new Error('You must provide a config value for pin-off.');
 
     this.state = false;
 
@@ -50,17 +50,17 @@ GPIOAccessory.prototype.getOn = function(callback) {
 
 GPIOAccessory.prototype.setOn = function(on, callback) {
     this.state = !on;
-    var relay = new Gpio(this.pin, 'out');
-    var relay2 = new Gpio(this.pin2, 'out');
+    var relayOn = new Gpio(this.pinOn, 'out');
+    var relayOff = new Gpio(this.pinOff, 'out');
     if(on){
-      relay.writeSync(0);
-      relay2.writeSync(0);
+      relayOn.writeSync(1);
+      relayOff.writeSync(0);
       this.state = true;
     }else{
-      relay.writeSync(1);
-      relay2.writeSync(1);
+      relayOn.writeSync(0);
+      relayOff.writeSync(1);
       this.state = false;
     }
-    this.log('writing ' + (on ? 'true' : 'false') + ' to gpio: ' + this.pin + '-' + this.pin2);
+    this.log('writing ' + (on ? 'true' : 'false') + ' to gpio: ' + this.pinOn + 'and ' + (on ? 'false' : 'true') + ' to gpio: ' + this.pinOff);
 		callback(null);
 }
