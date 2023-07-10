@@ -39,7 +39,11 @@ function GPIOAccessory(log, config) {
 			relaypOn.writeSync(this.inversed);
 			switchPin(relaypOff, this.pinOff, this.inversed, this.activeTime, this.log);
 		}	
+	}else{
+		relaypOff.writeSync(this.inversed);
+		relaypOn.writeSync(this.inversed);
 	}
+		
 	
 	if (!this.pinOn) throw new Error('You must provide a config value for pin-on.');
 	if (!this.pinOff) throw new Error('You must provide a config value for pin-off.');
