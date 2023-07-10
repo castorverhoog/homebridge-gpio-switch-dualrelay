@@ -23,20 +23,22 @@ function GPIOAccessory(log, config) {
 	this.name = config['name'];
 	this.pinOn = config['pin-on'];
 	this.pinOff = config['pin-off'];
-	this.statep = config['statep'];
+	this.statep = config['statep'] || null;
 	this.inversed = config['inversed'] || 1;
 	this.activeTime = config['active-time'] || 500; // in milliseconds
 	this.service = new Service.Switch(this.name);
 
 	var relaypOn = new Gpio(this.pinOn, 'out');
 	var relaypOff = new Gpio(this.pinOff, 'out');
-	
-	if(this.statep===true){
-		relaypOff.writeSync(this.inversed);
-		switchPin(relaypOn, this.pinOn, this.inversed, this.activeTime, this.log); 
-	}else{
-		relaypOn.writeSync(this.inversed);
-		switchPin(relaypOff, this.pinOff, this.inversed, this.activeTime, this.log);
+
+	if(this.stapep != null){
+		if(this.statep===true){
+			relaypOff.writeSync(this.inversed);
+			switchPin(relaypOn, this.pinOn, this.inversed, this.activeTime, this.log); 
+		}else{
+			relaypOn.writeSync(this.inversed);
+			switchPin(relaypOff, this.pinOff, this.inversed, this.activeTime, this.log);
+		}	
 	}
 	
 	if (!this.pinOn) throw new Error('You must provide a config value for pin-on.');
