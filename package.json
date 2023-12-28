@@ -1,6 +1,6 @@
 {
   "name": "homebridge-gpio-switch-dualrelay",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "For a switch that requires two GPIO pins (closing pin and opening pin), and requires them to be active for some amount of time.",
   "preferGlobal": true,
   "keywords": [
