@@ -1,5 +1,6 @@
 var Gpio = require('onoff').Gpio;
 var Service, Characteristic;
+var currentTO = null
 
 module.exports = function(homebridge) {
     Service = homebridge.hap.Service;
@@ -9,13 +10,17 @@ module.exports = function(homebridge) {
 };
 
 const switchPin = (pin, pinNo, inv, time, log) => {
+	let timeout
 	log("writing "+(inv ^ 1) + " to gpio pin "+ pinNo);
 	pin.write(inv ^ 1)
-		.then(() => setTimeout(() => {
-			pin.write(inv);
-			log("writing "+inv + " to gpio pin "+ pinNo);
-		}, time))
+		.then(() => {
+			timeout = setTimeout(() => {
+				pin.write(inv);
+				log("writing "+inv + " to gpio pin "+ pinNo);
+				}, time)
+		})
 		.catch(err => console.log(err));
+	return timeout
 };
 
 function GPIOAccessory(log, config) {
@@ -31,25 +36,26 @@ function GPIOAccessory(log, config) {
 	var relaypOn = new Gpio(this.pinOn, 'out');
 	var relaypOff = new Gpio(this.pinOff, 'out');
 
+	
 	if(this.stapep != null){
 		if(this.statep===true){
 			relaypOff.writeSync(this.inversed);
-			switchPin(relaypOn, this.pinOn, this.inversed, this.activeTime, this.log); 
+			clearTimeout(currentTO)
+			currentTO = switchPin(relaypOn, this.pinOn, this.inversed, this.activeTime, this.log); 
 		}else{
 			relaypOn.writeSync(this.inversed);
-			switchPin(relaypOff, this.pinOff, this.inversed, this.activeTime, this.log);
+			clearTimeout(currentTO)
+			currentTO = switchPin(relaypOff, this.pinOff, this.inversed, this.activeTime, this.log);
 		}	
 	}else{
 		relaypOff.writeSync(this.inversed);
 		relaypOn.writeSync(this.inversed);
 	}
-		
-	
+
 	if (!this.pinOn) throw new Error('You must provide a config value for pin-on.');
 	if (!this.pinOff) throw new Error('You must provide a config value for pin-off.');
 	
 	this.state = false;
-	
 	
 	this.service
 		.getCharacteristic(Characteristic.On)
@@ -72,12 +78,16 @@ GPIOAccessory.prototype.setOn = function(on, callback) {
 	var relayOff = new Gpio(this.pinOff, 'out');
 	if(on){
 		relayOff.writeSync(this.inversed);
-		switchPin(relayOn, this.pinOn, this.inversed, this.activeTime, this.log); 
+		clearTimeout(currentTO)
+		currentTO = switchPin(relayOn, this.pinOn, this.inversed, this.activeTime, this.log); 
 		this.state = true;
 	}else{
 		relayOn.writeSync(this.inversed);
-		switchPin(relayOff, this.pinOff, this.inversed, this.activeTime, this.log);
+		clearTimeout(currentTO)
+		currentTO = switchPin(relayOff, this.pinOff, this.inversed, this.activeTime, this.log);
 		this.state = false;
 	}
 	callback(null);
 }
+
+
