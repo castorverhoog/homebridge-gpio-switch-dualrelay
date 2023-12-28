@@ -26,18 +26,45 @@ const switchPin = (pin, pinNo, inv, time, log) => {
 function GPIOAccessory(log, config) {
 	this.log = log;
 	this.name = config['name'];
-	this.pinOn = config['pin-on'];
-	this.pinOff = config['pin-off'];
 	this.statep = config['statep'] || null;
-	this.inversed = config['inversed'] || 1;
+	this.inversed = config['inversed'] == null ? 1 : config['inversed'];
 	this.activeTime = config['active-time'] || 500; // in milliseconds
 	this.service = new Service.Switch(this.name);
+	
+	// ouput pins
+	this.pinOn = config['pin-on'];
+	this.pinOff = config['pin-off'];
+	// interrupt pins
+	this.inPinOn = config['in-pin-on'];
+	this.inPinOff = config['in-pin-off'];
+	
 
+	// output pins
 	var relaypOn = new Gpio(this.pinOn, 'out');
 	var relaypOff = new Gpio(this.pinOff, 'out');
 
-	
-	if(this.stapep != null){
+	// input pins for manually closing and opening
+	var inpOn = new Gpio(this.inPinOn, 'in', 'rising', {debounceTimeout: 100});
+	var inpOff = new Gpio(this.inPinOff, 'in', 'rising', {debounceTimeout: 100});
+
+	let cbFunc = (on, val) => {
+		if (val == false) return;
+		if(on){
+			relaypOn.writeSync(this.inversed);
+			clearTimeout(currentTO)
+			currentTO = switchPin(relaypOff, this.pinOff, this.inversed, this.activeTime, this.log);
+		} else {	
+			relaypOff.writeSync(this.inversed);
+			clearTimeout(currentTO)
+			currentTO = switchPin(relaypOn, this.pinOn, this.inversed, this.activeTime, this.log); 
+		}
+	}
+
+	inpOn.watch((_,val) =>  cbFunc(true, val))
+	inpOff.watch((_,val) =>  cbFunc(false, val))
+
+	// opening or closing at startup
+	if(this.statep != null){
 		if(this.statep===true){
 			relaypOff.writeSync(this.inversed);
 			clearTimeout(currentTO)
